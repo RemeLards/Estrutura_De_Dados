@@ -39,10 +39,10 @@ int main()
         int val;
         scanf("%d", &val);
         binary_tree_add(bt, new_int(val), new_int(val));
+        binary_tree_print(bt);
+        printf("\n");
     }
 
-    binary_tree_print(bt);
-    printf("\n");
     int m;
     scanf("%d", &m);
 
@@ -54,8 +54,6 @@ int main()
         printf("\n");
     }
 
-    binary_tree_print(bt);
-    printf("\n");
 
     binary_tree_destroy(bt);
 

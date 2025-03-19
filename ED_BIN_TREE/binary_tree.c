@@ -36,37 +36,30 @@ KeyValPair *key_val_pair_construct(void *key, void *val)
 
 
 
-Node* _binary_tree_add_recursive(BinaryTree* bt, Node* root, void* key, void* value)
+Node* _binary_tree_add_recursive(BinaryTree* bt, Node* node, void* key, void* value)
 {
     if ( bt != NULL && key != NULL )
     {
-        if ( root != NULL )
+        if ( node == NULL )
         {
-            KeyValPair* temp_pair = root->value;
+            KeyValPair* pair = key_val_pair_construct(key,value);
+            return node_construct(pair,NULL,NULL);
+        }
+        
+        else
+        {
+            KeyValPair* temp_pair = node->value;
+
             if ( bt->cmpfn(temp_pair->key,key) > 0 )
             {
-                if ( root->left != NULL ) _binary_tree_add_recursive(bt,root->left,key,value);
-                else
-                {
-                    KeyValPair* pair = key_val_pair_construct(key,value);
-                    root->left = node_construct(pair,NULL,NULL);
-                } 
+                node->left = _binary_tree_add_recursive(bt,node->left,key,value); 
             } 
             else if ( bt->cmpfn(temp_pair->key,key) < 0 )
             {
-                if ( root->right != NULL )_binary_tree_add_recursive(bt,root->right,key,value);
-                else
-                {
-                    KeyValPair* pair = key_val_pair_construct(key,value);
-                    root->right = node_construct(pair,NULL,NULL);
-                } 
+                node->right = _binary_tree_add_recursive(bt,node->right,key,value);
             }
-        }
 
-        else
-        {
-            KeyValPair* pair = key_val_pair_construct(key,value);
-            bt->root = node_construct(pair,NULL,NULL);
+            return node;
         }
     }
 
@@ -79,7 +72,7 @@ void binary_tree_add(BinaryTree *bt, void *key, void *value)
 {
     if ( bt != NULL )
     {
-        _binary_tree_add_recursive(bt,bt->root,key,value);
+        bt->root = _binary_tree_add_recursive(bt,bt->root,key,value);
     }
 }
 
@@ -199,240 +192,118 @@ void binary_tree_print(BinaryTree *bt)
 
 
 
-Node* _binary_tree_min_right_subtree_parent(Node* root)
+Node* _binary_tree_min_right_subtree(Node* root)
 {
     if ( root != NULL )
     {
-        Node* parent = root;
         Node* right_root = root->right;
 
         if ( right_root != NULL )
         {
             while ( right_root->left != NULL )
             {
-                parent = right_root;
                 right_root = right_root->left;
             }
         }
         // KeyValPair* debug_pair = parent->value;
         // printf("Choosen parent key : %d\n",*((int*)debug_pair->key));
 
-        return parent;
+        return right_root;
 
     }
 
     return NULL;
 }
 
-// Function to remove a node
-void _binary_tree_remove(BinaryTree* bt, Node* root, void* key, Node* parent) 
-{    
-    if (root != NULL)
-    {
-        KeyValPair* temp_pair = root->value;
-        // Search for the node
-        if (bt->cmpfn(temp_pair->key,key) > 0) 
-        {
-            _binary_tree_remove(bt,root->left,key,root);
-        } 
-        else if (bt->cmpfn(temp_pair->key,key) < 0) 
-        {
-            _binary_tree_remove(bt,root->right,key,root);
-        } 
-        else 
-        {
-            if (root->left == NULL && root->right == NULL)
-            {
-                key_val_pair_destroy(root->value);
-                node_destroy(root,NULL);
-                if ( parent == NULL ) bt->root = NULL;
-                else if ( parent->left == root) parent->left = NULL;
-                else parent->right = NULL;
-            }
-            else if (root->left == NULL)
-            {
-                if ( parent == NULL )bt->root = root->right;
-                else if ( parent->left == root ) parent->left = root->right;
-                else parent->right = root->right;
-                key_val_pair_destroy(root->value);
-                node_destroy(root,NULL);
-            }
-            else if (root->right == NULL)
-            {
-                if ( parent == NULL )bt->root = root->left;
-                else if ( parent->left == root ) parent->left = root->left;
-                else parent->right = root->left;
-                key_val_pair_destroy(root->value);
-                node_destroy(root,NULL);
-            }
-            else
-            {
-                // Case 2: Node with two children
-                KeyValPair* temp_pair;
-                Node* temp = _binary_tree_min_right_subtree_parent(root);
 
-                if ( temp == bt->root ) // Root
-                {
-                    temp_pair = temp->right->value;
 
-                    int* key = malloc(sizeof(int));
-                    int* value = malloc(sizeof(int));
-                    *key = *((int*)temp_pair->key);
-                    *value = *((int*)temp_pair->value);
-                    temp_pair = key_val_pair_construct(key,value);
-                    _binary_tree_remove(bt,temp->right, temp_pair->key,temp);
-                }
-                else
-                {
-                    temp_pair = temp->left->value;
 
-                    int* key = malloc(sizeof(int));
-                    int* value = malloc(sizeof(int));
-                    *key = *((int*)temp_pair->key);
-                    *value = *((int*)temp_pair->value);
-                    temp_pair = key_val_pair_construct(key,value);
-                    // printf("Choosen key recursion : %d\n",*key);
-                    _binary_tree_remove(bt,temp->left, temp_pair->key,temp);
-                }
-                _binary_tree_remove(bt,temp->right, temp_pair->key,temp);
-                key_val_pair_destroy(root->value);
-                root->value = temp_pair;
-            }
-        }
-    }
-}
-
-void _binary_tree_remove_2(BinaryTree* bt, Node* root, void *key)
+Node* _binary_tree_remove(BinaryTree* bt, Node* root, void *key)
 {
     if ( root != NULL )
     {
-        printf("passei aqui 1\n");
-        Node* root_copy = root;
+    
+        KeyValPair* current_pair;
+        Node* current_node = root;
         Node* parent = NULL;
-        while ( !(root_copy->left == NULL && root_copy->right == NULL ) )
-        {
-            printf("passei aqui 8\n");
-            KeyValPair* temp_pair = root_copy->value;
-            if ( bt->cmpfn(temp_pair->key,key) == 0 ) break; //Root key == key
-            printf("temp pair key : %d & key : %d\n",*((int*)temp_pair->key),*((int*)key));
 
-            printf("passei aqui 9\n");
-            parent = root_copy;
-            if ( bt->cmpfn(temp_pair->key,key) > 0 ) root_copy = root_copy->left; // Root key > key
-            else root_copy = root_copy->right; // Root key < key
-            printf("passei aqui 10\n");
+        if ( current_node != NULL ) current_pair = current_node->value;
+        while ( current_node != NULL && bt->cmpfn(current_pair->key,key) != 0)
+        {
+            printf("passei aqui loop\n");
+            parent = current_node;
+            if ( bt->cmpfn(current_pair->key,key) > 0 ) current_node = current_node->left; // Root key > key
+            else current_node = current_node->right; // Root key < key
+            current_pair = current_node->value;
 
         }
-        printf("passei aqui 2\n");
+        printf("passei aqui 1\n");
+        printf("key node choosen : %d\n", *((int*)current_pair->key));
+        if( current_node->right == NULL ) printf("right NULL\n");
+        if( current_node->left == NULL ) printf("left NULL\n");
 
-        if ( root_copy != NULL )
+        if ( current_node != NULL )
         {
             // Caso não tenha filhos
-            if ( root_copy->left == NULL && root_copy->right == NULL )
+            if ( current_node->left == NULL && current_node->right == NULL )
             {
-                printf("passei aqui 3\n");
-                key_val_pair_destroy(root_copy->value);
-                node_destroy(root_copy,NULL);
-                if ( parent == NULL )bt->root = NULL;
-                else if ( parent->left == root_copy)parent->left = NULL;
+                printf("passei aqui 1\n");
+                if ( parent == NULL ) bt->root = NULL;
+                else if ( parent->left == current_node) parent->left = NULL;
                 else parent->right = NULL; 
             }
 
             // Caso tenha um filho
 
-            else if ( root_copy->left != NULL && root_copy->right == NULL )
+            else if ( current_node->right == NULL )
             {
-                printf("passei aqui 4\n");
-                Node* temp_node = root_copy;
-                if ( parent == NULL )
-                {
-                    bt->root = root_copy->left;
-                    key_val_pair_destroy(temp_node->value);
-                    node_destroy(temp_node,NULL);
-                }
-                else if ( parent->left == root_copy )
-                {
-                    parent->left = root_copy->left;
-                    key_val_pair_destroy(temp_node->value);
-                    node_destroy(temp_node,NULL);
-                }
-                else
-                {
-                    parent->right = root_copy->left;
-                    key_val_pair_destroy(temp_node->value);
-                    node_destroy(temp_node,NULL);    
-                }
+                printf("passei aqui 2\n");
+                if ( parent == NULL ) bt->root = current_node->left;
+                else if ( parent->left == root ) parent->left = current_node->left;
+                else parent->right = current_node->left;
             }
 
-            else if ( root_copy->left == NULL && root_copy->right != NULL )
+            else if ( current_node->left == NULL )
             {
-                printf("passei aqui 5\n");
-                Node* temp_node = root_copy;
-                if ( parent == NULL )
-                {
-                    bt->root = root_copy->right;
-                    key_val_pair_destroy(temp_node->value);
-                    node_destroy(temp_node,NULL);
-                }
-                else if ( parent->left == root_copy )
-                { 
-                    parent->left = root_copy->right;
-                    key_val_pair_destroy(temp_node->value);
-                    node_destroy(temp_node,NULL);
-                }
-                else
-                {
-                    parent->right = root_copy->right;
-                    key_val_pair_destroy(temp_node->value);
-                    node_destroy(temp_node,NULL); 
-                }
+                printf("passei aqui 3\n");
+                if ( parent == NULL ) bt->root = current_node->right;
+                else if ( parent->left == root ) parent->left = current_node->right;
+                else parent->right = current_node->right;
             }
 
             // Caso tenha dois filhos 
 
             else
             {
-                printf("passei aqui 6\n");
-                KeyValPair* temp_pair;
-                Node* min_parent_right_subtree = _binary_tree_min_right_subtree_parent(root_copy);
-
-                if ( min_parent_right_subtree == bt->root ) // Root
-                {
-                    temp_pair = min_parent_right_subtree->right->value;
-
-                    int* key = malloc(sizeof(int));
-                    int* value = malloc(sizeof(int));
-                    *key = *((int*)temp_pair->key);
-                    *value = *((int*)temp_pair->value);
-                    temp_pair = key_val_pair_construct(key,value);
-                }
-                else
-                {
-                    temp_pair = min_parent_right_subtree->left->value;
-
-                    int* key = malloc(sizeof(int));
-                    int* value = malloc(sizeof(int));
-                    *key = *((int*)temp_pair->key);
-                    *value = *((int*)temp_pair->value);
-                    temp_pair = key_val_pair_construct(key,value);
-                    // printf("Choosen key recursion : %d\n",*key);
-                }
-                _binary_tree_remove_2(bt,min_parent_right_subtree,temp_pair->key);
-                key_val_pair_destroy(root_copy->value);
-                root_copy->value = temp_pair;
-                printf("passei aqui 7\n");
-
+                printf("passei aqui 4\n");
+                KeyValPair*  min_pair;
+                Node* min_parent_right_subtree = _binary_tree_min_right_subtree(current_node);
+                min_pair = min_parent_right_subtree->value;
+                
+                Node* node_to_remove = _binary_tree_remove(bt,root,min_pair->key);
+                key_val_pair_destroy(current_node->value);
+                current_node->value = node_to_remove->value;
+                node_to_remove->value = NULL;
+                current_node=node_to_remove;
             }
+
+            return current_node;
         }
     }
+
+    return NULL;
 }
+
 
 
 void binary_tree_remove(BinaryTree *bt, void *key)
 {
     if ( bt != NULL )
     { 
-        _binary_tree_remove_2(bt,bt->root,key);
+        Node* temp = _binary_tree_remove(bt,bt->root,key);
+
+        if ( temp-> value != NULL ) key_val_pair_destroy(temp->value);
+        node_destroy(temp,NULL);
     }
 }
 
