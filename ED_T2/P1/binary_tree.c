@@ -1,5 +1,5 @@
 #include "binary_tree.h"
-#include "node.h"
+#include "node_tree.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -49,7 +49,7 @@ Node* _binary_tree_add_recursive(BinaryTree* bt, Node* root, void* key, void* va
                 else
                 {
                     KeyValPair* pair = key_val_pair_construct(key,value);
-                    root->left = node_construct(pair,NULL,NULL);
+                    root->left = node_construct_tree(pair,NULL,NULL);
                 } 
             } 
             else if ( bt->cmpfn(temp_pair->key,key) < 0 )
@@ -58,7 +58,7 @@ Node* _binary_tree_add_recursive(BinaryTree* bt, Node* root, void* key, void* va
                 else
                 {
                     KeyValPair* pair = key_val_pair_construct(key,value);
-                    root->right = node_construct(pair,NULL,NULL);
+                    root->right = node_construct_tree(pair,NULL,NULL);
                 } 
             }
 
@@ -72,7 +72,7 @@ Node* _binary_tree_add_recursive(BinaryTree* bt, Node* root, void* key, void* va
         else
         {
             KeyValPair* pair = key_val_pair_construct(key,value);
-            bt->root = node_construct(pair,NULL,NULL);
+            bt->root = node_construct_tree(pair,NULL,NULL);
         }
     }
 
@@ -126,8 +126,8 @@ void* binary_tree_get(BinaryTree *bt, void *key)
 
 void key_val_pair_destroy(KeyValPair *kvp)
 {
-    free(kvp->key);
-    free(kvp->value);
+    free(kvp->key); // Changed so Enterprise doesnt get freed
+    free(kvp->value); // Changed so Enterprise doesnt get freed
     free(kvp);
 }
 
@@ -146,7 +146,7 @@ void _binary_tree_destroy_recursive(Node* root)
             _binary_tree_destroy_recursive(root->right);
         }
         if ( root->value != NULL ) key_val_pair_destroy(root->value);
-        node_destroy(root,NULL);
+        node_destroy_tree(root,NULL);
     }
 } 
 
@@ -251,7 +251,7 @@ void _binary_tree_remove(BinaryTree* bt, Node* root, void *key)
             if ( root_copy->left == NULL && root_copy->right == NULL )
             {
                 key_val_pair_destroy(root_copy->value);
-                node_destroy(root_copy,NULL);
+                node_destroy_tree(root_copy,NULL);
                 if ( parent == NULL )bt->root = NULL;
                 else if ( parent->left == root_copy)parent->left = NULL;
                 else parent->right = NULL; 
@@ -266,19 +266,19 @@ void _binary_tree_remove(BinaryTree* bt, Node* root, void *key)
                 {
                     bt->root = root_copy->left;
                     key_val_pair_destroy(temp_node->value);
-                    node_destroy(temp_node,NULL);
+                    node_destroy_tree(temp_node,NULL);
                 }
                 else if ( parent->left == root_copy )
                 {
                     parent->left = root_copy->left;
                     key_val_pair_destroy(temp_node->value);
-                    node_destroy(temp_node,NULL);
+                    node_destroy_tree(temp_node,NULL);
                 }
                 else
                 {
                     parent->right = root_copy->left;
                     key_val_pair_destroy(temp_node->value);
-                    node_destroy(temp_node,NULL);    
+                    node_destroy_tree(temp_node,NULL);    
                 }
             }
 
@@ -289,19 +289,19 @@ void _binary_tree_remove(BinaryTree* bt, Node* root, void *key)
                 {
                     bt->root = root_copy->right;
                     key_val_pair_destroy(temp_node->value);
-                    node_destroy(temp_node,NULL);
+                    node_destroy_tree(temp_node,NULL);
                 }
                 else if ( parent->left == root_copy )
                 { 
                     parent->left = root_copy->right;
                     key_val_pair_destroy(temp_node->value);
-                    node_destroy(temp_node,NULL);
+                    node_destroy_tree(temp_node,NULL);
                 }
                 else
                 {
                     parent->right = root_copy->right;
                     key_val_pair_destroy(temp_node->value);
-                    node_destroy(temp_node,NULL); 
+                    node_destroy_tree(temp_node,NULL); 
                 }
             }
 
@@ -360,13 +360,13 @@ KeyValPair *binary_tree_pop_min(BinaryTree *bt)
             if ( root_copy->right == NULL )parent->left = NULL;
             else parent->left = root_copy->right;
             pair  = root_copy->value;
-            node_destroy(root_copy,NULL);
+            node_destroy_tree(root_copy,NULL);
         }
         else
         {
             bt->root = root_copy->right;
             pair  = root_copy->value;
-            node_destroy(root_copy,NULL);
+            node_destroy_tree(root_copy,NULL);
         }
 
 
@@ -398,18 +398,63 @@ KeyValPair *binary_tree_pop_max(BinaryTree *bt)
             if (root_copy->left == NULL) parent->right = NULL;
             else  parent->right = root_copy->left;
             pair  = root_copy->value;
-            node_destroy(root_copy,NULL);
+            node_destroy_tree(root_copy,NULL);
         }
         else
         {
             bt->root = root_copy->left;
             pair  = root_copy->value;
-            node_destroy(root_copy,NULL);
+            node_destroy_tree(root_copy,NULL);
         }
         return pair;
     }
     return NULL;
 }
+
+
+
+KeyValPair *binary_tree_min(BinaryTree *bt)
+{
+    if (bt != NULL)
+    {
+        Node* root_copy = bt->root;
+
+        while ( root_copy->left != NULL )
+        {
+            root_copy = root_copy->left;
+        }
+
+        KeyValPair* pair = NULL;
+        pair  = root_copy->value;
+
+
+        return pair;
+
+    }
+
+    return NULL;
+}
+
+
+
+KeyValPair *binary_tree_max(BinaryTree *bt)
+{
+    if (bt != NULL)
+    {
+        Node* root_copy = bt->root;
+
+        while ( root_copy->right != NULL )
+        {
+            root_copy = root_copy->right;
+        }
+
+        KeyValPair* pair = NULL;
+        pair  = root_copy->value;
+        return pair;
+    }
+    return NULL;
+}
+
 
 
 
@@ -429,9 +474,9 @@ void _binary_tree_levelorder_traversal_iterative(BinaryTree *bt, Node* root, Vec
                 KeyValPair* current_pair = current->value;
 
                 int* key = malloc(sizeof(int));
-                *key = *((int*)current_pair->key);
+                key = current_pair->key;
                 int* value = malloc(sizeof(int));
-                *value = *((int*)current_pair->value);
+                value = current_pair->value;
                 KeyValPair* pair = key_val_pair_construct(key,value);
 
                 vector_push_back(v,pair);
@@ -481,9 +526,9 @@ void _binary_tree_inorder_traversal_recursive(BinaryTree* bt, Node* root, Vector
             KeyValPair* current_pair = root->value;
 
             int* key = malloc(sizeof(int));
-            *key = *((int*)current_pair->key);
+            key = current_pair->key;
             int* value = malloc(sizeof(int));
-            *value = *((int*)current_pair->value);
+            value = current_pair->value;
             KeyValPair* pair = key_val_pair_construct(key,value);
 
             vector_push_back(v,pair);
@@ -518,9 +563,9 @@ void _binary_tree_preorder_traversal_recursive(BinaryTree* bt, Node* root, Vecto
             KeyValPair* current_pair = root->value;
 
             int* key = malloc(sizeof(int));
-            *key = *((int*)current_pair->key);
+            key = current_pair->key;
             int* value = malloc(sizeof(int));
-            *value = *((int*)current_pair->value);
+            value =current_pair->value;
             KeyValPair* pair = key_val_pair_construct(key,value);
 
             vector_push_back(v,pair);
