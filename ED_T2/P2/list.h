@@ -6,9 +6,7 @@
 
 typedef struct List List;
 
-
 typedef struct ListIterator ListIterator;
-
 
 /**
  * @brief Construct a new double linked list object

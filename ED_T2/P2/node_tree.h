@@ -6,6 +6,7 @@ typedef void* data_type;
 
 typedef struct Node Node;
 
+
 Node *node_construct_tree(data_type value, Node *left, Node *right);
 void node_destroy_tree(Node *n,void(*data_destroy_fn)(void* data));
 void node_print_tree(Node *l, void (*print_fn)(data_type));

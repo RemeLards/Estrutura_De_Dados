@@ -11,6 +11,7 @@ typedef struct Node
 } Node;
 
 
+
 typedef struct BinaryTree
 {
     Node* root;
@@ -637,14 +638,13 @@ Vector* binary_tree_postorder_traversal_recursive(BinaryTree *bt)
 
 
 
-
-void _percurso(Node *node,void *min_key, void *max_key, Vector* v, int(*cmp_key)(void* key1,void* key2))
+void _binary_tree_interval(Node *node,void *min_key, void *max_key, Vector* v, int(*cmp_key)(void* key1,void* key2))
 {
     if ( node != NULL )
     {
         if ( node -> left != NULL )
         {   
-            _percurso(node->left,min_key,max_key,v,cmp_key);
+            _binary_tree_interval(node->left,min_key,max_key,v,cmp_key);
 
         }
 
@@ -655,11 +655,12 @@ void _percurso(Node *node,void *min_key, void *max_key, Vector* v, int(*cmp_key)
 
         if ( node -> right != NULL )
         {
-            _percurso(node->right,min_key,max_key,v,cmp_key);
+            _binary_tree_interval(node->right,min_key,max_key,v,cmp_key);
         }
         
     }
 }
+
 
 
 Vector* binary_tree_interval(BinaryTree *bt, void *min_key, void *max_key,int(*cmp_key)(void* key1,void* key2))
@@ -667,9 +668,88 @@ Vector* binary_tree_interval(BinaryTree *bt, void *min_key, void *max_key,int(*c
     if ( bt != NULL )
     {
         Vector* v = vector_construct();
-        _percurso(bt->root, min_key, max_key, v,cmp_key);
+        _binary_tree_interval(bt->root, min_key, max_key, v,cmp_key);
         return v;
     }
 
     return NULL;
 }
+
+
+
+void _binary_tree_reverse_inorder_traversal_recursive(BinaryTree* bt, Node* root, Vector* v)
+{
+    if ( bt != NULL )
+    {
+        if ( root != NULL )
+        {
+            
+            if ( root->right != NULL ) _binary_tree_inorder_traversal_recursive(bt,root->right,v);
+
+            KeyValPair* current_pair = root->value;
+
+            vector_push_back(v,current_pair);
+
+            if ( root->left != NULL ) _binary_tree_inorder_traversal_recursive(bt,root->left,v);
+
+        }
+    }
+}
+
+
+
+Vector* binary_tree_reverse_inorder_traversal_recursive(BinaryTree *bt)
+{
+    if ( bt != NULL )
+    {
+        Vector* v = vector_construct();
+        _binary_tree_reverse_inorder_traversal_recursive(bt,bt->root,v);
+        return v;
+    }
+
+    return NULL;
+}
+
+
+
+void _percurso(Node *node,void* data,void* cmp_data,void (*cmp_fn)(void* pair1, void* pair2,void* pair3))
+{
+    if ( node != NULL )
+    {
+        if ( node -> left != NULL )
+        {   
+            _percurso(node->left,data,cmp_data,cmp_fn);
+
+        }
+
+        KeyValPair* pair_node = node->value;
+        KeyValPair* pair_cmp_data = cmp_data;
+
+        cmp_fn(data,pair_cmp_data->key,pair_node->key);
+
+        if ( node -> right != NULL )
+        {
+            _percurso(node->right,data,cmp_data,cmp_fn);
+        }
+        
+    }
+}
+
+
+
+void* binary_tree_knn(BinaryTree *bt,void* cmp_data ,void (*cmp_fn)(void* pair1, void* pair2, void* pair3))
+{
+    if ( bt != NULL )
+    {
+        void* data = NULL;
+        data = NULL;
+        // funcao principal que itera sobre os elementos da arvore, verifica se
+        // eles estao no intervalo e atualiza as variaveis out_array e out_array_size.
+        _percurso(bt->root, data, cmp_data, cmp_fn);
+
+        return data;
+    }
+
+    return NULL;
+}
+

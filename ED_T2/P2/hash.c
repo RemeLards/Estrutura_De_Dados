@@ -12,7 +12,6 @@ typedef struct Node
     struct Node *next;
 } Node;
 
-
 typedef struct List
 {
     Node *head;
@@ -25,6 +24,7 @@ typedef struct ListIterator
     Node *current;
 } ListIterator;
 
+
 typedef struct HashTable
 {
     List** bucket;
@@ -32,7 +32,6 @@ typedef struct HashTable
     HashFunction hash_fn;
     CmpFunction cmp_fn;
 }HashTable;
-
 
 
 typedef struct HashTableIterator

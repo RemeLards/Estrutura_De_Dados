@@ -10,7 +10,6 @@ typedef struct Node
     struct Node *right;
 } Node;
 
-
 Node *node_construct_tree(data_type value, Node *left, Node *right)
 {
     Node *n = (Node *)malloc(sizeof(Node));
