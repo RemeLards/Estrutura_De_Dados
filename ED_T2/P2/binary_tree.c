@@ -311,6 +311,7 @@ void _binary_tree_remove(BinaryTree* bt, Node* root, void *key,void(*destroy_pai
                 }
                 else
                 {
+                    
                     parent->right = root_copy->right;
                     destroy_pair(temp_node->value);
                     node_destroy_tree(temp_node,NULL); 
@@ -687,8 +688,7 @@ void _binary_tree_reverse_inorder_traversal_recursive(BinaryTree* bt, Node* root
             if ( root->right != NULL ) _binary_tree_inorder_traversal_recursive(bt,root->right,v);
 
             KeyValPair* current_pair = root->value;
-
-            vector_push_back(v,current_pair);
+            if ( root-> value != NULL ) vector_push_back(v,current_pair);
 
             if ( root->left != NULL ) _binary_tree_inorder_traversal_recursive(bt,root->left,v);
 
@@ -698,12 +698,13 @@ void _binary_tree_reverse_inorder_traversal_recursive(BinaryTree* bt, Node* root
 
 
 
-Vector* binary_tree_reverse_inorder_traversal_recursive(BinaryTree *bt)
+Vector* binary_tree_reverse_inorder_traversal_recursive(BinaryTree *bt,int(*cmp_vector)(void* key1,void* key2))
 {
     if ( bt != NULL )
     {
         Vector* v = vector_construct();
         _binary_tree_reverse_inorder_traversal_recursive(bt,bt->root,v);
+        vector_sort(v,cmp_vector);
         return v;
     }
 
@@ -722,10 +723,12 @@ void _percurso(Node *node,void* data,void* cmp_data,void (*cmp_fn)(void* pair1, 
 
         }
 
-        KeyValPair* pair_node = node->value;
-        KeyValPair* pair_cmp_data = cmp_data;
+        if (node->value)
+        {
+            KeyValPair* pair_node = node->value;
 
-        cmp_fn(data,pair_cmp_data->key,pair_node->key);
+            cmp_fn(data,cmp_data,pair_node->key);
+        }
 
         if ( node -> right != NULL )
         {
@@ -737,19 +740,11 @@ void _percurso(Node *node,void* data,void* cmp_data,void (*cmp_fn)(void* pair1, 
 
 
 
-void* binary_tree_knn(BinaryTree *bt,void* cmp_data ,void (*cmp_fn)(void* pair1, void* pair2, void* pair3))
+void binary_tree_knn(BinaryTree *bt,void* data, void* cmp_data ,void (*cmp_fn)(void* pair1, void* pair2, void* pair3))
 {
     if ( bt != NULL )
     {
-        void* data = NULL;
-        data = NULL;
-        // funcao principal que itera sobre os elementos da arvore, verifica se
-        // eles estao no intervalo e atualiza as variaveis out_array e out_array_size.
         _percurso(bt->root, data, cmp_data, cmp_fn);
-
-        return data;
     }
-
-    return NULL;
 }
 

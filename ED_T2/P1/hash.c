@@ -234,7 +234,7 @@ void* hash_table_pop(HashTable* h, void* key,void(*destroy_pair)(void* pair))
                         }
                     
                         void* stored_val = malloc(sizeof(void*));
-                        memcpy (stored_val,temp_h_item->val,sizeof(int));
+                        memcpy (stored_val,temp_h_item->val,sizeof(void*));
 
                         destroy_pair(temp_h_item);
 

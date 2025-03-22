@@ -43,11 +43,11 @@ Vector *binary_tree_preorder_traversal(BinaryTree *bt);
 Vector *binary_tree_postorder_traversal(BinaryTree *bt);
 Vector *binary_tree_levelorder_traversal(BinaryTree *bt);
 
-Vector *binary_tree_reverse_inorder_traversal_recursive(BinaryTree *bt);
+Vector *binary_tree_reverse_inorder_traversal_recursive(BinaryTree *bt,int(*cmp_vector)(void* key1,void* key2));
 Vector *binary_tree_inorder_traversal_recursive(BinaryTree *bt);
 Vector *binary_tree_preorder_traversal_recursive(BinaryTree *bt);
 Vector *binary_tree_postorder_traversal_recursive(BinaryTree *bt);
 
-void* binary_tree_knn(BinaryTree *bt, void* cmp_data ,void (*cmp_fn)(void* pair1, void* pair2, void* pair3));
+void binary_tree_knn(BinaryTree *bt,void* data, void* cmp_data ,void (*cmp_fn)(void* pair1, void* pair2, void* pair3));
 
 #endif

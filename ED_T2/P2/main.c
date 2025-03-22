@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,9 +6,13 @@
 #include "binary_tree.h"
 #include <math.h>
 
-
 #define MAX_PLAYER_NAME 100
 #define MAX_PLAYER_NICKNAME 40
+
+/*
+Não sei o porque os testes [8,10] não funcionaram pois ficaram muito grandes para serem testados
+tentei botar comparação de STR's onde consegui porém não resolveu
+*/
 
 typedef struct Player
 {
@@ -46,7 +49,7 @@ void player_destroy_hashtable_item(void* data)
             if (player->nickname) free(player->nickname);
             else printf("player->nickname was NULL\n");
         }
-            if ( player ) free(player); //The rest of the variables arent pointers
+        if ( player ) free(player); //The rest of the variables arent pointers
         else printf("player was NULL\n"); 
     }
 
@@ -61,10 +64,13 @@ void player_destroy_hashtable_item(void* data)
 void player_destroy_binary_tree_item(void* data)
 {
     KeyValPair* pair = data;
-    KeyValPair* keypair = pair->key;
-    if ( keypair->key ) free(keypair->key); //Now I malloc the player WinRate
-    if ( pair->key ) free(pair->key);//Binary Tree will only destroy the internal pair representation and its key (which is another pair key-value)
-    if ( pair ) free(pair); 
+    if ( pair )
+    {
+        KeyValPair* keypair = pair->key;
+        if ( keypair->key ) free(keypair->key); //Now I malloc the player WinRate
+        if ( pair->key ) free(pair->key);//Binary Tree will only destroy the internal pair representation and its key (which is another pair key-value)
+        if ( pair ) free(pair); 
+    }
 }
 
 
@@ -81,7 +87,7 @@ KeyValPair* player_key_construct_binary_tree(void* key)
     KeyValPair* key_pair = malloc(sizeof(KeyValPair));
     Player* player = key;
     float* winrate = malloc(sizeof(float));
-    *(winrate) = player->victories/(player->matches); 
+    *(winrate) = (float)(player->victories)/(player->matches); 
     key_pair->key = winrate; //Agora vou ter que destruir a chave do par de chaves
     key_pair->value = player->nickname;
     return key_pair;
@@ -95,7 +101,8 @@ void* player_copy_key_binary_tree(void* key)
     if ( key )
     {
         KeyValPair* key_pair = malloc(sizeof(KeyValPair));
-        key_pair->key = key_copy->key;
+        key_pair->key = malloc(sizeof(float));
+        memcpy(key_pair->key, key_copy->key, sizeof(float));
         key_pair->value = key_copy->value;
         return key_pair;
     }
@@ -188,6 +195,9 @@ int cmp_fn(void *key1, void *key2)
     float* wr_p1 = p1->key;
     float* wr_p2 = p2->key;
 
+    // printf("float player 1 %.2f\n",*wr_p1);
+    // printf("float player 2 %.2f\n",*wr_p2);
+    
     if ( *(wr_p1) - *(wr_p2)  > 0 ) return 1 ;
     else if ( *(wr_p1) - *(wr_p2)  < 0 ) return -1 ;
 
@@ -220,18 +230,57 @@ void cmp_knn(void* key1, void* key2, void* key3)
     float* player2_wr = keypair2->key;
     KeyValPair* keypair3 = key3;
     float* player3_wr = keypair3->key;
+    KeyValPair* keypair1 = key1;
 
-    if ( key1 == NULL )
+    if ( *(player2_wr) != *(player3_wr) )
     {
-        key1 = keypair3;
-    }
-    else
-    {
-        KeyValPair* keypair1 = key1;
-        float* player1_wr = keypair1->key;
+        if ( keypair1->key == NULL )
+        {
+ 
+            keypair1->key = keypair3->key;
+            keypair1->value = keypair3->value;
+        }
+        else
+        {
+            if (keypair1->key != NULL ) //if is the same player
+            {
+                float* player1_wr = keypair1->key;
 
-        if ( fabs(*player1_wr-*player2_wr) > fabs(*player3_wr-*player2_wr)  ) key1 = keypair3; 
+                if ( fabs(*player1_wr-*player2_wr) > fabs(*player3_wr-*player2_wr)  )
+                {
+                    keypair1->key = keypair3->key;
+                    keypair1->value = keypair3->value;
+                }
+                else if (fabs(*player1_wr-*player2_wr) == fabs(*player3_wr-*player2_wr))
+                {
+                    if(strcmp(keypair1->value,keypair3->value) < 0)
+                    {
+                        keypair1->key = keypair3->key;
+                    keypair1->value = keypair3->value;
+                    }
+                }
+    
+            }
+
+        }
     }
+}
+
+
+
+int cmp_vector(void* key1, void* key2)
+{
+    KeyValPair* pair1 = key1;
+    KeyValPair* pair2 = key2;
+    KeyValPair* keypair1 = pair1->key;
+    KeyValPair* keypair2 = pair2->key;
+    float* wr1 = keypair1->key;
+    float* wr2 = keypair2->key;
+
+    if ( *(wr1) > *(wr2) ) return 1;
+    if (*(wr1) == *(wr2) ) return strcmp(keypair1->value,keypair2->value);
+
+    return 0;
 }
 
 
@@ -263,7 +312,7 @@ int main()
 
     scanf("%d",&n_instructions);
 
-    for ( int i = 0; i < n_instructions; i++)
+    for ( int i = 0; i < n_instructions; i++ )
     {
         char command[65];
 
@@ -271,19 +320,19 @@ int main()
 
         if ( strcmp("VICTORIES",command) == 0)
         {
-            char* sigla = malloc(sizeof(char)*MAX_PLAYER_NICKNAME);
+            char* nickname = malloc(sizeof(char)*MAX_PLAYER_NICKNAME);
             float victories = 0;
-            scanf("%s %f", sigla,&victories);
+            scanf("%s %f", nickname,&victories);
 
             //Hashtable Part
-            Player* player = hash_table_get(player_ht,sigla);
+            Player* player = hash_table_get(player_ht,nickname);
             if ( player != NULL )
             {
                 //Binary Tree Part
 
                 KeyValPair* pair = malloc(sizeof(KeyValPair));
                 float* wr = malloc(sizeof(float));
-                *wr = player->victories/player->matches;
+                *wr = (float)player->victories/player->matches;
                 pair->key = wr;
                 pair->value = player->nickname;
 
@@ -297,24 +346,24 @@ int main()
                 free(pair);
             }
 
-            free(sigla);
+            free(nickname);
         }
 
         if ( strcmp("DEFEATS",command) == 0)
         {
-            char* sigla = malloc(sizeof(char)*MAX_PLAYER_NICKNAME);
+            char* nickname = malloc(sizeof(char)*MAX_PLAYER_NICKNAME);
             float defeats = 0;
-            scanf("%s %f", sigla,&defeats);
+            scanf("%s %f", nickname,&defeats);
 
             //Hashtable Part
-            Player* player = hash_table_get(player_ht,sigla);
+            Player* player = hash_table_get(player_ht,nickname);
             if ( player != NULL )
             {
                 //Binary Tree Part
 
                 KeyValPair* pair = malloc(sizeof(KeyValPair));
                 float* wr = malloc(sizeof(float));
-                *wr = player->victories/player->matches;
+                *wr = (float)player->victories/player->matches;
                 pair->key = wr;
                 pair->value = player->nickname;
 
@@ -326,41 +375,41 @@ int main()
                 free(pair);
             }
 
-            free(sigla);
+            free(nickname);
         }
 
         if ( strcmp("GET",command) == 0) //Funcionando sem individualmente
         {
-            char* sigla = malloc(sizeof(char)*MAX_PLAYER_NICKNAME);
-            scanf("%s", sigla);
+            char* nickname = malloc(sizeof(char)*MAX_PLAYER_NICKNAME);
+            scanf("%s", nickname);
 
-            Player* player = hash_table_get(player_ht,sigla);
+            Player* player = hash_table_get(player_ht,nickname);
             print_player(player);
 
-            free(sigla);
+            free(nickname);
 
         }
 
         if ( strcmp("RM",command) == 0) //Hash funcionando
         {
-            char* sigla = malloc(sizeof(char)*MAX_PLAYER_NICKNAME);
-            scanf("%s", sigla);
+            char* nickname = malloc(sizeof(char)*MAX_PLAYER_NICKNAME);
+            scanf("%s", nickname);
             
 
-            Player* player = hash_table_get(player_ht,sigla);
+            Player* player = hash_table_get(player_ht,nickname);
 
             KeyValPair* pair = malloc(sizeof(KeyValPair));
             float* wr = malloc(sizeof(float));
-            *wr = player->victories/player->matches;
+            *wr = (float)player->victories/player->matches;
             pair->key = wr;
             pair->value = player->nickname;
 
             binary_tree_remove(player_bt,pair,player_destroy_binary_tree_item,player_copy_key_binary_tree,player_value_construct_binary_tree);
-            hash_table_remove(player_ht,player->nickname,player_destroy_hashtable_item);
+            free(hash_table_pop(player_ht,player->nickname,player_destroy_hashtable_item));
 
             free(wr);
             free(pair);
-            free(sigla);
+            free(nickname);
         }
 
         if ( strcmp("INTERVAL",command) == 0)
@@ -407,7 +456,8 @@ int main()
 
         if ( strcmp("SORTED",command) == 0) //Funcionando
         {
-            Vector* v = binary_tree_reverse_inorder_traversal_recursive(player_bt);
+            // Vector* v = binary_tree_reverse_inorder_traversal_recursive(player_bt,cmp_vector);
+            Vector* v = binary_tree_inorder_traversal_recursive(player_bt);
 
             if ( v != NULL )
             {
@@ -415,9 +465,9 @@ int main()
                 {
                     KeyValPair* pair = vector_get(v,i);
                     KeyValPair* key_pair = pair->key;
-                    float* unit_price = key_pair->key;
+                    float* wr = key_pair->key;
                     char* nickname = key_pair->value;
-                    printf("%s %.2f\n",nickname,*(unit_price)); 
+                    printf("%s %.2f\n",nickname,*(wr)); 
                 }
 
                 vector_destroy(v);
@@ -426,9 +476,27 @@ int main()
 
         if ( strcmp("MATCH",command) == 0) //Funcionando
         {
-            KeyValPair* nearest_player = binary_tree_knn(player_bt,NULL,cmp_knn);
-            Player* player = hash_table_get(player_ht,nearest_player->value);
-            printf("%s\n",player->nickname);
+            char* nickname = malloc(sizeof(char)*MAX_PLAYER_NICKNAME);
+            scanf("%s", nickname);
+
+            Player* player = hash_table_get(player_ht,nickname);
+            KeyValPair* pair = player_key_construct_binary_tree(player);
+            KeyValPair* nearest_player = malloc(sizeof(KeyValPair));
+            nearest_player->key = NULL; 
+            nearest_player->value = NULL;  
+
+            binary_tree_knn(player_bt,nearest_player,pair,cmp_knn);
+
+            if ( nearest_player )
+            {
+                char* nearest_player_nickname = nearest_player->value;
+                printf("%s\n",nearest_player_nickname);
+            }
+
+            free(nearest_player);
+            free(nickname);
+            free(pair->key);
+            free(pair);
 
         }
 

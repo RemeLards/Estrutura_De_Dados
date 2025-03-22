@@ -233,7 +233,7 @@ void* hash_table_pop(HashTable* h, void* key,void(*destroy_pair)(void* pair))
                         }
                     
                         void* stored_val = malloc(sizeof(void*));
-                        memcpy (stored_val,temp_h_item->val,sizeof(int));
+                        memcpy (stored_val,temp_h_item->val,sizeof(void*));
 
                         destroy_pair(temp_h_item);
 
@@ -264,7 +264,7 @@ HashTableIterator* hash_table_iterator(HashTable *h)
 }
 
 
-// retorna 1 se o iterador chegou ao fim da tabela hash ou 0 caso contrario
+
 int hash_table_iterator_is_over(HashTableIterator *it)
 {
     if ( it != NULL)
@@ -286,7 +286,7 @@ int hash_table_iterator_is_over(HashTableIterator *it)
 }
 
 
-// retorna o proximo par chave valor da tabela hash
+
 HashTableItem* hash_table_iterator_next(HashTableIterator *it)
 {
     if ( it != NULL )
@@ -333,7 +333,6 @@ HashTableItem* hash_table_iterator_next(HashTableIterator *it)
 
 
 
-// desaloca o iterador da tabela hash
 void hash_table_iterator_destroy(HashTableIterator *it)
 {
     free(it);
@@ -361,6 +360,8 @@ Vector* hash_to_vector(HashTable *h)
     return NULL; 
 }
 
+
+
 void hash_table_remove(HashTable *h, void* key,void(*destroy_pair)(void* pair))
 {
     if ( h != NULL && key != NULL )
@@ -369,7 +370,6 @@ void hash_table_remove(HashTable *h, void* key,void(*destroy_pair)(void* pair))
 
         if ( h->bucket[index]->size > 0 )
         {
-            // HashTableItem* item = list_pop_item(h->bucket[index],hash_cmp_key,key);
             ListIterator* it = list_front_iterator(h->bucket[index]);
             Node* it_prev_node = it->current;
 
@@ -381,17 +381,19 @@ void hash_table_remove(HashTable *h, void* key,void(*destroy_pair)(void* pair))
                 {
                     if ( h->cmp_fn(temp_h_item->key, key) == 0)
                     {
-                        if ( it_prev_node->prev == NULL &&  it_prev_node == h->bucket[index]->head )list_pop_front(h->bucket[index]); // Updates HEAD                
+                        if ( it_prev_node->prev == NULL &&  it_prev_node == h->bucket[index]->head )
+                        {
+                            list_pop_front(h->bucket[index]); // Updates HEAD   
+                        }             
                         else
                         {
-                            if ( it_prev_node->prev != NULL ) it_prev_node->prev->next = it_prev_node->next;
-                            if ( it_prev_node->next != NULL ) it_prev_node->next->prev = it_prev_node->prev;
+                            it_prev_node->next->prev = it_prev_node->prev;
                             node_destroy_list(it_prev_node,NULL);
                             h->bucket[index]->size--;
                         }
 
                         destroy_pair(temp_h_item);
-                        list_iterator_destroy(it);
+                        break;
                     }
                 }
                 it_prev_node = it->current;
